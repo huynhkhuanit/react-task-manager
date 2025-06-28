@@ -4,7 +4,7 @@ import { usersTable } from '../../db/schema';
 import { type RegisterInput, type AuthUser } from '../../schema';
 import { eq } from 'drizzle-orm';
 
-export async function register(input: RegisterInput): Promise<AuthUser> {
+export async function register(input: RegisterInput): Promise<{ user: AuthUser }> {
   try {
     // Check if user with email already exists
     const existingUser = await db.select()
@@ -36,10 +36,12 @@ export async function register(input: RegisterInput): Promise<AuthUser> {
 
     // Return sanitized user data (without password)
     return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      avatar_url: user.avatar_url
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar_url: user.avatar_url
+      }
     };
   } catch (error) {
     console.error('User registration failed:', error);

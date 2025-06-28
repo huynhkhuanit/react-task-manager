@@ -25,12 +25,13 @@ describe('login', () => {
   afterEach(resetDB);
 
   it('should authenticate user with valid credentials', async () => {
-    // Create user with password stored as plain text (for testing)
+    // Create user with properly hashed password
+    const hashedPassword = await Bun.password.hash(testUser.password);
     await db.insert(usersTable)
       .values({
         email: testUser.email,
         name: testUser.name,
-        password_hash: testUser.password, // Storing plain text for testing
+        password_hash: hashedPassword,
         provider: 'email',
       })
       .execute();
@@ -42,10 +43,10 @@ describe('login', () => {
 
     const result = await login(loginInput);
 
-    expect(result.email).toEqual(testUser.email);
-    expect(result.name).toEqual(testUser.name);
-    expect(result.id).toBeDefined();
-    expect(result.avatar_url).toBeNull();
+    expect(result.user.email).toEqual(testUser.email);
+    expect(result.user.name).toEqual(testUser.name);
+    expect(result.user.id).toBeDefined();
+    expect(result.user.avatar_url).toBeNull();
   });
 
   it('should reject login with invalid email', async () => {
@@ -68,12 +69,13 @@ describe('login', () => {
   });
 
   it('should reject login with invalid password', async () => {
-    // Create user with password
+    // Create user with properly hashed password
+    const hashedPassword = await Bun.password.hash(testUser.password);
     await db.insert(usersTable)
       .values({
         email: testUser.email,
         name: testUser.name,
-        password_hash: testUser.password,
+        password_hash: hashedPassword,
         provider: 'email',
       })
       .execute();
@@ -108,12 +110,13 @@ describe('login', () => {
 
   it('should handle user with all optional fields populated', async () => {
     // Create user with all fields
+    const hashedPassword = await Bun.password.hash(testUser.password);
     await db.insert(usersTable)
       .values({
         email: testUser.email,
         name: testUser.name,
         avatar_url: 'https://example.com/avatar.jpg',
-        password_hash: testUser.password,
+        password_hash: hashedPassword,
         provider: 'email',
       })
       .execute();
@@ -125,9 +128,9 @@ describe('login', () => {
 
     const result = await login(loginInput);
 
-    expect(result.email).toEqual(testUser.email);
-    expect(result.name).toEqual(testUser.name);
-    expect(result.avatar_url).toEqual('https://example.com/avatar.jpg');
-    expect(result.id).toBeDefined();
+    expect(result.user.email).toEqual(testUser.email);
+    expect(result.user.name).toEqual(testUser.name);
+    expect(result.user.avatar_url).toEqual('https://example.com/avatar.jpg');
+    expect(result.user.id).toBeDefined();
   });
 });

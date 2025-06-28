@@ -20,15 +20,15 @@ describe('oauth', () => {
     const result = await oauth(input);
 
     // Verify returned user data
-    expect(result.id).toBeDefined();
-    expect(result.email).toEqual('user@gmail.com');
-    expect(result.name).toEqual('Google User');
-    expect(result.avatar_url).toEqual('https://lh3.googleusercontent.com/a/default-user');
+    expect(result.user.id).toBeDefined();
+    expect(result.user.email).toEqual('user@gmail.com');
+    expect(result.user.name).toEqual('Google User');
+    expect(result.user.avatar_url).toEqual('https://lh3.googleusercontent.com/a/default-user');
 
     // Verify user was saved to database
     const users = await db.select()
       .from(usersTable)
-      .where(eq(usersTable.id, result.id))
+      .where(eq(usersTable.id, result.user.id))
       .execute();
 
     expect(users).toHaveLength(1);
@@ -49,15 +49,15 @@ describe('oauth', () => {
     const result = await oauth(input);
 
     // Verify returned user data
-    expect(result.id).toBeDefined();
-    expect(result.email).toEqual('user@github.com');
-    expect(result.name).toEqual('GitHub User');
-    expect(result.avatar_url).toEqual('https://avatars.githubusercontent.com/u/123456?v=4');
+    expect(result.user.id).toBeDefined();
+    expect(result.user.email).toEqual('user@github.com');
+    expect(result.user.name).toEqual('GitHub User');
+    expect(result.user.avatar_url).toEqual('https://avatars.githubusercontent.com/u/123456?v=4');
 
     // Verify user was saved to database
     const users = await db.select()
       .from(usersTable)
-      .where(eq(usersTable.id, result.id))
+      .where(eq(usersTable.id, result.user.id))
       .execute();
 
     expect(users).toHaveLength(1);
@@ -76,15 +76,15 @@ describe('oauth', () => {
     const firstResult = await oauth(input);
     const originalCreatedAt = (await db.select()
       .from(usersTable)
-      .where(eq(usersTable.id, firstResult.id))
+      .where(eq(usersTable.id, firstResult.user.id))
       .execute())[0].created_at;
 
     // Second OAuth login - should update existing user
     const secondResult = await oauth(input);
 
     // Should return same user ID
-    expect(secondResult.id).toEqual(firstResult.id);
-    expect(secondResult.email).toEqual('user@gmail.com');
+    expect(secondResult.user.id).toEqual(firstResult.user.id);
+    expect(secondResult.user.email).toEqual('user@gmail.com');
 
     // Verify only one user exists in database
     const allUsers = await db.select()
@@ -93,7 +93,7 @@ describe('oauth', () => {
 
     expect(allUsers).toHaveLength(1);
     const user = allUsers[0];
-    expect(user.id).toEqual(firstResult.id);
+    expect(user.id).toEqual(firstResult.user.id);
     expect(user.created_at).toEqual(originalCreatedAt);
     expect(user.updated_at > originalCreatedAt).toBe(true);
   });
@@ -117,7 +117,7 @@ describe('oauth', () => {
 
     const users = await db.select()
       .from(usersTable)
-      .where(eq(usersTable.id, result.id))
+      .where(eq(usersTable.id, result.user.id))
       .execute();
 
     const user = users[0];
@@ -135,13 +135,13 @@ describe('oauth', () => {
     const result = await oauth(input);
 
     // Verify AuthUser type - should not include sensitive fields
-    expect(result).not.toHaveProperty('password_hash');
-    expect(result).not.toHaveProperty('provider');
-    expect(result).not.toHaveProperty('provider_id');
-    expect(result).not.toHaveProperty('created_at');
-    expect(result).not.toHaveProperty('updated_at');
+    expect(result.user).not.toHaveProperty('password_hash');
+    expect(result.user).not.toHaveProperty('provider');
+    expect(result.user).not.toHaveProperty('provider_id');
+    expect(result.user).not.toHaveProperty('created_at');
+    expect(result.user).not.toHaveProperty('updated_at');
 
     // Should only have AuthUser fields
-    expect(Object.keys(result)).toEqual(['id', 'email', 'name', 'avatar_url']);
+    expect(Object.keys(result.user)).toEqual(['id', 'email', 'name', 'avatar_url']);
   });
 });

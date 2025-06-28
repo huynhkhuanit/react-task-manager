@@ -22,11 +22,11 @@ describe('register', () => {
     const result = await register(testInput);
 
     // Verify returned user data
-    expect(result.email).toEqual('test@example.com');
-    expect(result.name).toEqual('Test User');
-    expect(result.avatar_url).toBeNull();
-    expect(result.id).toBeDefined();
-    expect(typeof result.id).toBe('string');
+    expect(result.user.email).toEqual('test@example.com');
+    expect(result.user.name).toEqual('Test User');
+    expect(result.user.avatar_url).toBeNull();
+    expect(result.user.id).toBeDefined();
+    expect(typeof result.user.id).toBe('string');
   });
 
   it('should save user to database with hashed password', async () => {
@@ -35,7 +35,7 @@ describe('register', () => {
     // Query database to verify user was created
     const users = await db.select()
       .from(usersTable)
-      .where(eq(usersTable.id, result.id))
+      .where(eq(usersTable.id, result.user.id))
       .execute();
 
     expect(users).toHaveLength(1);
@@ -63,9 +63,9 @@ describe('register', () => {
 
     const result = await register(inputWithoutName);
 
-    expect(result.email).toEqual('noname@example.com');
-    expect(result.name).toBeNull();
-    expect(result.id).toBeDefined();
+    expect(result.user.email).toEqual('noname@example.com');
+    expect(result.user.name).toBeNull();
+    expect(result.user.id).toBeDefined();
   });
 
   it('should throw error when user with email already exists', async () => {

@@ -38,7 +38,7 @@ async function fetchOAuthUserData(provider: string, code: string) {
   return userData;
 }
 
-export async function oauth(input: OAuthInput): Promise<AuthUser> {
+export async function oauth(input: OAuthInput): Promise<{ user: AuthUser }> {
   try {
     // Step 1: Exchange authorization code for user data
     const oauthUserData = await fetchOAuthUserData(input.provider, input.code);
@@ -84,10 +84,12 @@ export async function oauth(input: OAuthInput): Promise<AuthUser> {
     
     // Step 4: Return sanitized user data (no sensitive fields)
     return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      avatar_url: user.avatar_url,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar_url: user.avatar_url,
+      }
     };
   } catch (error) {
     console.error('OAuth authentication failed:', error);

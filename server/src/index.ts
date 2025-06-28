@@ -39,7 +39,10 @@ const t = initTRPC.context<Context>().create({
 const publicProcedure = t.procedure;
 const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   if (!ctx.userId) {
-    throw new TRPCError({ code: 'UNAUTHORIZED' });
+    throw new TRPCError({ 
+      code: 'UNAUTHORIZED',
+      message: 'You must be logged in to access this resource'
+    });
   }
   return next({
     ctx: {
@@ -104,9 +107,10 @@ async function start() {
   const port = process.env['SERVER_PORT'] || 2022;
   
   const server = createHTTPServer({
-    middleware: (req, res, next) => {
-      cors()(req, res, next);
-    },
+    middleware: cors({
+      origin: ['http://localhost:5173', 'http://localhost:3000'],
+      credentials: true,
+    }),
     router: appRouter,
     createContext({ req }) {
       // Extract user ID from Authorization header
@@ -118,7 +122,11 @@ async function start() {
       if (authHeader && authHeader.startsWith('Bearer ')) {
         // For demo purposes, we'll accept any token as a valid user ID
         // In production, decode and validate JWT token
-        userId = authHeader.substring(7);
+        const token = authHeader.substring(7);
+        // Basic validation - in production, verify JWT signature
+        if (token && token.length > 0) {
+          userId = token;
+        }
       }
       
       return { userId };
@@ -126,7 +134,12 @@ async function start() {
   });
   
   server.listen(port);
-  console.log(`TRPC server listening at port: ${port}`);
+  console.log(`🚀 TRPC server listening at port: ${port}`);
+  console.log(`📱 Frontend: http://localhost:5173`);
+  console.log(`🔗 API: http://localhost:${port}`);
 }
 
-start();
+start().catch((error) => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});
