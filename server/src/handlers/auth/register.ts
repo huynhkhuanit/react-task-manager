@@ -1,19 +1,48 @@
 
+import { db } from '../../db';
+import { usersTable } from '../../db/schema';
 import { type RegisterInput, type AuthUser } from '../../schema';
+import { eq } from 'drizzle-orm';
 
 export async function register(input: RegisterInput): Promise<AuthUser> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is to register a new user with email/password.
-    // Steps:
-    // 1. Check if user with email already exists
-    // 2. Hash the password using bcrypt
-    // 3. Create new user record in database
-    // 4. Return sanitized user data (without password)
-    
-    return {
-        id: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
+  try {
+    // Check if user with email already exists
+    const existingUser = await db.select()
+      .from(usersTable)
+      .where(eq(usersTable.email, input.email))
+      .execute();
+
+    if (existingUser.length > 0) {
+      throw new Error('User with this email already exists');
+    }
+
+    // Hash the password using Bun's built-in password hashing
+    const passwordHash = await Bun.password.hash(input.password);
+
+    // Create new user record
+    const result = await db.insert(usersTable)
+      .values({
         email: input.email,
         name: input.name || null,
-        avatar_url: null,
+        password_hash: passwordHash,
+        provider: 'email',
+        provider_id: null,
+        avatar_url: null
+      })
+      .returning()
+      .execute();
+
+    const user = result[0];
+
+    // Return sanitized user data (without password)
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatar_url: user.avatar_url
     };
+  } catch (error) {
+    console.error('User registration failed:', error);
+    throw error;
+  }
 }
